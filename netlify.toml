@@ -1,2 +1,8 @@
 [build]
   publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "https://barnye-veshchi-arenda-kazan-ksdb.vercel.app/:splat"
+  status = 301
+  force = true

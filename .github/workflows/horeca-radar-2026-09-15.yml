@@ -1,0 +1,56 @@
+name: HoReCa Radar 2026-09-15
+on:
+  push:
+    paths:
+      - '.github/workflows/horeca-radar-2026-09-15.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update radar content
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('horeca/index.html')
+          s=p.read_text()
+          if 'data-day="2026-09-15"' in s:
+              raise SystemExit('Already updated')
+          # Header/current snapshot. Preserve every previous snapshot.
+          s=s.replace('Обновлено 14.09.2026','Обновлено 15.09.2026')
+          s=s.replace('<small>Активных лидов</small><strong>13</strong>','<small>Активных лидов</small><strong>17</strong>')
+          s=s.replace('<small>Новых 14.09</small><strong>0</strong>','<small>Новых 15.09</small><strong>4</strong>')
+          s=s.replace('<small>История</small><strong>14 / 10 / 09 / 08 сен.</strong>','<small>История</small><strong>15 / 14 / 10 / 09 сен.</strong>')
+          s=s.replace('<button class="day-btn" data-day="2026-09-14" aria-pressed="true">Сегодня · 14.09</button>','<button class="day-btn" data-day="2026-09-15" aria-pressed="true">Сегодня · 15.09</button><button class="day-btn" data-day="2026-09-14" aria-pressed="false">14.09</button>')
+          s=s.replace("let selectedDay='2026-09-14'","let selectedDay='2026-09-15'")
+          # Carry all active 14.09 leads into the 15.09 daily snapshot.
+          s=s.replace('data-snapshots="2026-09-14 ', 'data-snapshots="2026-09-15 2026-09-14 ')
+          # Confirmed status updates from Business Online, 13.09.2026.
+          s=s.replace('Павильон с кофейней · запуск планировался 30.08','Павильон с кофейней · фактически работает')
+          s=s.replace('<b>30 августа 2026</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Post-opening / проверить запуск</b>','<b>Открыта</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Post-opening сейчас</b>',1)
+          s=s.replace('Уточнить оператора и фактический запуск','Предложить post-opening дозакупку чашек, стекла и расходников',1)
+          s=s.replace('Готовится к открытию</td><td><b>Сентябрь 2026</b>','Вывеска и команда готовы · открытие «вот-вот»</td><td><b>Сентябрь 2026</b>',1)
+          # Add four fresh, confirmed sales leads from the 13.09 market review.
+          marker='<tbody><tr data-rating="A+" data-types="restaurant" data-created="2026-09-10"'
+          rows='''<tbody><tr data-rating="A+" data-types="restaurant" data-created="2026-09-15" data-snapshots="2026-09-15"><td><span class="created">15.09</span></td><td><a class="lead-link" href="https://www.business-gazeta.ru/article/711124" target="_blank">Камерата · ЖК «Мон» ↗</a></td><td>Бар / бистро</td><td>Pre-opening · вывеска уже на фасаде, запуск обещан совсем скоро</td><td><b>Скоро · дата не опубликована</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Сейчас · до открытия</b></td><td class="score">A+</td><td>Команда Wine Me / Liloko + «Марево»</td><td>Найти ЛПР и предложить финальный добор стекла и барного инвентаря</td></tr><tr data-rating="A+" data-types="cafe restaurant" data-created="2026-09-15" data-snapshots="2026-09-15"><td><span class="created">15.09</span></td><td><a class="lead-link" href="https://www.business-gazeta.ru/article/711124" target="_blank">СНДВЧ · казанский ГУМ ↗</a></td><td>Сэндвич-бар</td><td>Pre-opening · продолжает готовиться к открытию</td><td><b>Дата не опубликована</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Сейчас · до комплектации</b></td><td class="score">A+</td><td>Казанский ГУМ</td><td>Найти оператора/закупщика и окно стартовой комплектации</td></tr><tr data-rating="A+" data-types="restaurant" data-created="2026-09-15" data-snapshots="2026-09-15"><td><span class="created">15.09</span></td><td><a class="lead-link" href="https://www.business-gazeta.ru/article/711124" target="_blank">TANTO! · ТЦ XL ↗</a></td><td>Ресторан</td><td>Pre-opening · вторая точка сети</td><td><b>Дата не опубликована</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Сейчас · до запуска</b></td><td class="score">A+</td><td>ТЦ XL · проспект Ямашева</td><td>Выйти на закупки сети и предложить стартовую матрицу второй точки</td></tr><tr data-rating="A+" data-types="restaurant" data-created="2026-09-15" data-snapshots="2026-09-15"><td><span class="created">15.09</span></td><td><a class="lead-link" href="https://www.business-gazeta.ru/article/711124" target="_blank">Brooklyn Pizza · Козина ↗</a></td><td>Пиццерия</td><td>Pre-opening · готовится третья полноценная точка</td><td><b>Скоро · дата не опубликована</b></td><td><span class="conf conf-high">Высокая</span></td><td><b>Сейчас · до запуска</b></td><td class="score">A+</td><td>ул. Козина · рядом с «Галэм»</td><td>Выйти на закупки сети и уточнить дату комплектации</td></tr>'''
+          if marker not in s: raise SystemExit('Lead insertion marker not found')
+          s=s.replace(marker, rows+'<tr data-rating="A+" data-types="restaurant" data-created="2026-09-10"',1)
+          # Put fresh leads at the top of concrete sales actions; keep all old actions untouched.
+          action_marker='<tbody><tr><td>A+ · срочно</td><td><b>Sardiner Brasserie</b>'
+          actions='''<tbody><tr><td>A+ · новый</td><td><b>Камерата · ЖК «Мон»</b><br><span class="task-result">вывеска уже на фасаде · открытие скоро</span></td><td>Найти управляющего/бар-менеджера.</td><td>Предложить финальный добор стекла, коктейльной посуды и барного инвентаря.</td><td><b>ЛПР + потребность + дата закупки</b></td><td><b>Сегодня</b></td></tr><tr><td>A+ · новый</td><td><b>СНДВЧ · казанский ГУМ</b><br><span class="task-result">готовится к открытию</span></td><td>Найти оператора и закупщика.</td><td>Уточнить формат выдачи и стартовую матрицу посуды/хозтоваров.</td><td><b>ЛПР + дата запуска + матрица</b></td><td><b>Сегодня–48 ч.</b></td></tr><tr><td>A+ · новый</td><td><b>TANTO! · ТЦ XL</b><br><span class="task-result">вторая точка</span></td><td>Выйти на закупки действующей сети.</td><td>Уточнить дату запуска и потребность новой точки.</td><td><b>Закупщик + дата + стартовый заказ</b></td><td><b>48 ч.</b></td></tr><tr><td>A+ · новый</td><td><b>Brooklyn Pizza · Козина</b><br><span class="task-result">третья полноценная точка · скоро</span></td><td>Выйти на закупки сети.</td><td>Уточнить дату комплектации и недостающие категории.</td><td><b>ЛПР + окно закупки + категории</b></td><td><b>48 ч.</b></td></tr>'''
+          if action_marker not in s: raise SystemExit('Action insertion marker not found')
+          s=s.replace(action_marker,actions+'<tr><td>A+ · срочно</td><td><b>Sardiner Brasserie</b>',1)
+          # AIR2026 source is now independently verified on the official site; keep existing event/action.
+          s=s.replace('HoReCa Radar v3.3 · обновлено 14.09.2026.','HoReCa Radar v3.3 · обновлено 15.09.2026.')
+          p.write_text(s)
+          PY
+      - name: Commit update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add horeca/index.html
+          git commit -m 'HoReCa Radar: 15 Sep leads and status updates'
+          git push

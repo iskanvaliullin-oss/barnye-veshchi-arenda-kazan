@@ -1,0 +1,62 @@
+name: Refactor HoReCa Radar
+
+on:
+  push:
+    paths:
+      - '.github/refactor-horeca-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Refactor horeca/index.html
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('horeca/index.html')
+          html = path.read_text(encoding='utf-8')
+
+          old = "let selectedDay='2026-09-15';"
+          new = "const initialDayBtn=db.find(b=>b.getAttribute('aria-pressed')==='true')||db[0];let selectedDay=initialDayBtn?initialDayBtn.dataset.day:'2026-09-15';"
+          if old in html:
+              html = html.replace(old, new, 1)
+
+          if 'src="./radar-data.js"' not in html:
+              marker = '<script>(()=>{const rb='
+              injection = ('<!-- Dynamic radar data: daily automation updates radar-data.js only -->'
+                           '<script src="./radar-data.js"></script>'
+                           '<script src="./radar-renderer.js"></script>'
+                           '<script>(()=>{const rb=')
+              if marker not in html:
+                  raise SystemExit('Filter script marker not found; refusing unsafe rewrite')
+              html = html.replace(marker, injection, 1)
+
+          html = re.sub(r'>\s*<', '>\n<', html)
+          path.write_text(html, encoding='utf-8')
+
+          assert html.count('src="./radar-data.js"') == 1
+          assert html.count('src="./radar-renderer.js"') == 1
+          assert 'initialDayBtn' in html
+          assert '<section class="section" id="openings">' in html
+          assert '<section class="section" id="events">' in html
+          assert 'c54b95087834eb7d67b72a278877ead8' in html
+          assert 'radar-feedback' in html
+      - name: Commit refactor
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add horeca/index.html
+          if git diff --cached --quiet; then
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "Refactor HoReCa radar HTML and connect data layer"
+          git push

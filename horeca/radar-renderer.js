@@ -75,6 +75,34 @@
     if (x.types != null) r.dataset.types = x.types;
   });
 
+  // Keep the table scannable: long operational notes stay available, but do
+  // not force every lead row to the height of its longest field.
+  if (leadBody) {
+    leadBody.querySelectorAll('tr').forEach(row => {
+      const details = [3, 8, 9].map(index => row.children[index]).filter(Boolean);
+      details.forEach(cell => {
+        if (cell.querySelector('.lead-clamp')) return;
+        const preview = document.createElement('div');
+        preview.className = 'lead-clamp';
+        while (cell.firstChild) preview.append(cell.firstChild);
+        cell.append(preview);
+      });
+      const taskCell = row.children[9];
+      if (!taskCell || taskCell.querySelector('.lead-more')) return;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'lead-more';
+      button.setAttribute('aria-expanded', 'false');
+      button.textContent = 'Подробнее';
+      button.addEventListener('click', () => {
+        const expanded = row.classList.toggle('lead-expanded');
+        button.setAttribute('aria-expanded', String(expanded));
+        button.textContent = expanded ? 'Свернуть' : 'Подробнее';
+      });
+      taskCell.append(button);
+    });
+  }
+
   (d.actions || []).forEach(x => {
     if (!actionBody || !x.id || actionBody.querySelector(`[data-radar-id="${cssEscape(x.id)}"]`)) return;
     const tr = document.createElement('tr');
